@@ -14,6 +14,7 @@ public record Settings(
         TeleportSoundSettings teleportSound,
         ActionBarCooldownSoundSettings actionBarCooldownSound,
         Map<WorldType, WorldSettings> worlds,
+        WorldGuardZoneSettings worldGuardZone,
         boolean rtpZonesEnabled,
         List<RtpZoneSettings> rtpZones
 ) {

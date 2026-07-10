@@ -1,6 +1,6 @@
 warmup-seconds: 5
-cooldown-seconds: 30
-max-attempts: 30
+cooldown-seconds: 300
+max-attempts: 60
 
 # When true, teleports immediately after a safe location is found (skips warmup countdown).
 instant-teleport: false
@@ -70,3 +70,57 @@ teleport-sound:
   # sound: BLOCK_PORTAL_TRAVEL
   # volume: 0.8
   # pitch: 1.2
+
+# WorldGuard RTP zone: enter a configured region to start random teleport.
+# Requires WorldGuard (optional soft dependency). Use: /donutrtp zone set <region>
+rtp-zone:
+  enabled: true
+
+  # Destination world type for the random teleport (OVERWORLD, NETHER, or END).
+  destination-world-type: OVERWORLD
+
+  worldguard:
+    enabled: true
+    region: ""
+    world: "world"
+
+  trigger:
+    # ENTER = region entry only | INTERACT = region entry disabled | BOTH = region entry enabled
+    mode: "ENTER"
+    require-player-movement: true
+
+  cooldown:
+    seconds: 300
+    message: "&cYou must wait &e{time} &cbefore using the RTP zone again."
+    bypass-enabled: true
+    bypass-permission: "donutrtp.cooldown.bypass"
+
+  countdown:
+    enabled: true
+    seconds: 5
+    cancel-on-move: false
+
+  messages:
+    entering-zone: "&eRandom teleport starting..."
+    searching: "&eSearching for a safe location..."
+    teleported: "&aYou were randomly teleported!"
+    no-safe-location: "&cNo safe location could be found."
+    countdown-cancelled: "&cRTP zone countdown cancelled."
+
+# Legacy cuboid RTP zones (1.3.0). Still supported when no WorldGuard region is configured.
+# Prefer rtp-zone + /donutrtp zone set for new setups.
+rtp-zones:
+  enabled: false
+  zones:
+    spawn_pad:
+      enabled: true
+      world: world
+      world-type: OVERWORLD
+      x: 0.5
+      y: 64.0
+      z: 0.5
+      half-size-x: 3
+      half-size-y: 2
+      half-size-z: 3
+      countdown-seconds: 10
+      # permission: donutrtp.zone.spawn_pad

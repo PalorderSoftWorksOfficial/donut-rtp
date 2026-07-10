@@ -2,24 +2,23 @@ package io.nightbeam.donutrtp.rtp;
 
 import io.nightbeam.donutrtp.config.ActionBarCooldownSoundSettings;
 import io.nightbeam.donutrtp.config.ConfigManager;
-import io.nightbeam.donutrtp.config.RtpZoneSettings;
 import io.nightbeam.donutrtp.util.FoliaCompat;
-import java.time.Duration;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
-import net.kyori.adventure.title.Title;
 import org.bukkit.entity.Player;
 
 public final class ZoneCountdownTask {
 
     private final FoliaCompat foliaCompat;
     private final ConfigManager configManager;
-    private final RtpManager rtpManager;
     private final ActionBarCooldownSoundSettings countdownSound;
-    private final RtpZoneSettings zone;
     private final Player player;
+    private final int initialSeconds;
+    private final Supplier<Boolean> stillValid;
+    private final Runnable onTickComplete;
     private final Runnable onCancelled;
     private final Runnable onFinished;
 
@@ -29,29 +28,34 @@ public final class ZoneCountdownTask {
     public ZoneCountdownTask(
             FoliaCompat foliaCompat,
             ConfigManager configManager,
-            RtpManager rtpManager,
             ActionBarCooldownSoundSettings countdownSound,
-            RtpZoneSettings zone,
             Player player,
+            int countdownSeconds,
+            Supplier<Boolean> stillValid,
+            Runnable onTickComplete,
             Runnable onCancelled,
             Runnable onFinished
     ) {
         this.foliaCompat = foliaCompat;
         this.configManager = configManager;
-        this.rtpManager = rtpManager;
         this.countdownSound = countdownSound;
-        this.zone = zone;
         this.player = player;
+        this.initialSeconds = Math.max(0, countdownSeconds);
+        this.stillValid = stillValid;
+        this.onTickComplete = onTickComplete;
         this.onCancelled = onCancelled;
         this.onFinished = onFinished;
-        this.secondsLeft = new AtomicInteger(zone.countdownSeconds());
-    }
-
-    public RtpZoneSettings zone() {
-        return zone;
+        this.secondsLeft = new AtomicInteger(this.initialSeconds);
     }
 
     public void start() {
+        if (initialSeconds <= 0) {
+            if (active.compareAndSet(true, false)) {
+                onFinished.run();
+                onTickComplete.run();
+            }
+            return;
+        }
         tick();
     }
 
@@ -59,7 +63,7 @@ public final class ZoneCountdownTask {
         if (!active.compareAndSet(true, false)) {
             return;
         }
-        clearTitle();
+        clearActionBar();
         onFinished.run();
         if (sendCallback) {
             onCancelled.run();
@@ -78,7 +82,7 @@ public final class ZoneCountdownTask {
             cancel(false);
             return;
         }
-        if (!zone.contains(player.getLocation())) {
+        if (stillValid != null && !Boolean.TRUE.equals(stillValid.get())) {
             cancel(true);
             return;
         }
@@ -86,30 +90,27 @@ public final class ZoneCountdownTask {
         int left = secondsLeft.getAndDecrement();
         if (left <= 0) {
             if (active.compareAndSet(true, false)) {
-                clearTitle();
+                clearActionBar();
                 onFinished.run();
-                rtpManager.teleportRandom(player, zone.worldType());
+                onTickComplete.run();
             }
             return;
         }
 
-        showCountdownTitle(left);
+        sendCountdownActionBar(left);
         playCountdownSound();
         foliaCompat.runLaterForEntity(player, this::tick, 20L);
     }
 
-    private void showCountdownTitle(int seconds) {
-        String titleText = configManager.plainMessage("zone-countdown-title")
-                .replace("%seconds%", String.valueOf(seconds));
-        String subtitleText = configManager.plainMessage("zone-countdown-subtitle");
-        Component title = LegacyComponentSerializer.legacySection().deserialize(titleText);
-        Component subtitle = LegacyComponentSerializer.legacySection().deserialize(subtitleText);
-        Title.Times times = Title.Times.times(
-                Duration.ZERO,
-                Duration.ofMillis(1100),
-                Duration.ofMillis(200)
-        );
-        player.showTitle(Title.title(title, subtitle, times));
+    private void sendCountdownActionBar(int seconds) {
+        String text = configManager.plainMessage("zone-countdown-actionbar");
+        if (text == null || text.isBlank()) {
+            text = configManager.plainMessage("countdown-actionbar");
+        }
+        text = text
+                .replace("%seconds%", String.valueOf(seconds))
+                .replace("{seconds}", String.valueOf(seconds));
+        player.sendActionBar(LegacyComponentSerializer.legacySection().deserialize(text));
     }
 
     private void playCountdownSound() {
@@ -124,9 +125,9 @@ public final class ZoneCountdownTask {
         );
     }
 
-    private void clearTitle() {
+    private void clearActionBar() {
         if (player.isOnline()) {
-            player.clearTitle();
+            player.sendActionBar(Component.empty());
         }
     }
 }

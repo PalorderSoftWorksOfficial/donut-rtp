@@ -1,17 +1,18 @@
 name: DonutRTP
-version: '1.2.0'
+version: '1.4.0'
 main: io.nightbeam.donutrtp.DonutRTPPlugin
 api-version: '1.20'
 folia-supported: true
-softdepend: [HeadDatabase]
+softdepend: [HeadDatabase, WorldGuard]
 author: NightBeam
 description: DonutSMP-style RTP GUI for Paper and Folia.
 
 commands:
   rtp:
     description: Opens the RTP GUI
-    usage: /rtp [reload]
+    usage: /rtp [reload|zone ...]
     permission: donutrtp.use
+    aliases: [donutrtp]
 
 permissions:
   donutrtp.use:
@@ -19,4 +20,13 @@ permissions:
     default: true
   donutrtp.admin:
     description: Allows reloading DonutRTP config
+    default: op
+  donutrtp.zone.use:
+    description: Allows using RTP zones
+    default: true
+  donutrtp.zone.admin:
+    description: Allows managing the WorldGuard RTP zone
+    default: op
+  donutrtp.cooldown.bypass:
+    description: Bypasses RTP cooldown when enabled in config
     default: op

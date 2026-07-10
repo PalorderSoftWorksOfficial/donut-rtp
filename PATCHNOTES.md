@@ -1,5 +1,33 @@
 # DonutRTP Patch Notes
 
+## 1.4.0
+
+### New Features
+* **WorldGuard RTP zone** — configure an existing WorldGuard region as an RTP pad
+  * `/donutrtp zone set <region>` or `/donutrtp zone set <world> <region>`
+  * `/donutrtp zone remove`, `/donutrtp zone info`, `/donutrtp zone reload`
+  * Trigger on region enter (ENTER / BOTH); no re-trigger while remaining inside
+  * Zone-specific cooldown, action-bar countdown, and messages
+* WorldGuard is an **optional softdepend** — the plugin starts without it and only disables region zones
+
+### Configuration
+* New `rtp-zone` section in `config.yml` (enabled by default; region empty until set)
+* Legacy `rtp-zones` cuboid zones still work when no WorldGuard region is configured
+
+### Permissions
+* `donutrtp.zone.admin` — manage zone commands (default: op)
+* `donutrtp.cooldown.bypass` — bypass cooldown when `rtp-zone.cooldown.bypass-enabled` is true
+
+### Commands
+* `/rtp` alias: `donutrtp`
+* `/donutrtp zone set|remove|info|reload`
+
+### Notes
+* INTERACT trigger mode disables region-entry RTP only; the `/rtp` GUI remains available
+* There is still no physical in-world RTP block/head interact listener
+
+---
+
 ## 1.3.0
 
 ### New Features

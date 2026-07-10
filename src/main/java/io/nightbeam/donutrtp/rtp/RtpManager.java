@@ -3,6 +3,7 @@ package io.nightbeam.donutrtp.rtp;
 import io.nightbeam.donutrtp.config.ConfigManager;
 import io.nightbeam.donutrtp.config.Settings;
 import io.nightbeam.donutrtp.config.TeleportSoundSettings;
+import io.nightbeam.donutrtp.config.WorldGuardZoneSettings;
 import io.nightbeam.donutrtp.config.WorldSettings;
 import io.nightbeam.donutrtp.util.FoliaCompat;
 import java.time.Instant;
@@ -32,13 +33,38 @@ public final class RtpManager {
         this.locationFinder = new SafeLocationFinder(foliaCompat);
     }
 
-    public void startTeleport(Player player, WorldType type) {
-        Settings settings = configManager.settings();
+    public boolean isOnCooldown(Player player) {
+        return remainingCooldownSeconds(player) > 0;
+    }
+
+    public long remainingCooldownSeconds(Player player) {
         long now = Instant.now().getEpochSecond();
         long cooldownUntil = cooldownUntilEpoch.getOrDefault(player.getUniqueId(), 0L);
+        return Math.max(0L, cooldownUntil - now);
+    }
 
-        if (cooldownUntil > now) {
-            long wait = cooldownUntil - now;
+    public boolean hasCooldownBypass(Player player) {
+        WorldGuardZoneSettings zone = configManager.settings().worldGuardZone();
+        if (!zone.bypassEnabled()) {
+            return false;
+        }
+        String permission = zone.bypassPermission();
+        return permission != null && !permission.isBlank() && player.hasPermission(permission);
+    }
+
+    public void applyCooldown(Player player, int seconds) {
+        if (seconds <= 0 || hasCooldownBypass(player)) {
+            return;
+        }
+        long expiresAt = Instant.now().getEpochSecond() + seconds;
+        cooldownUntilEpoch.put(player.getUniqueId(), expiresAt);
+    }
+
+    public void startTeleport(Player player, WorldType type) {
+        Settings settings = configManager.settings();
+
+        if (!hasCooldownBypass(player) && isOnCooldown(player)) {
+            long wait = remainingCooldownSeconds(player);
             player.sendMessage(configManager.message("cooldown").replace("%time%", String.valueOf(wait)));
             return;
         }
@@ -51,7 +77,7 @@ public final class RtpManager {
         }
 
         if (settings.instantTeleport()) {
-            doTeleport(player, world, worldSettings, settings);
+            doTeleport(player, world, worldSettings, settings, settings.cooldownSeconds(), null, null, null);
             return;
         }
 
@@ -66,7 +92,7 @@ public final class RtpManager {
                 settings.actionBarCooldownSound(),
                 player,
                 settings.warmupSeconds(),
-                () -> doTeleport(player, world, worldSettings, settings),
+                () -> doTeleport(player, world, worldSettings, settings, settings.cooldownSeconds(), null, null, null),
                 () -> player.sendMessage(configManager.message("cancelled-move"))
         );
         warmups.put(player.getUniqueId(), warmup);
@@ -74,12 +100,24 @@ public final class RtpManager {
     }
 
     public void teleportRandom(Player player, WorldType type) {
-        Settings settings = configManager.settings();
-        long now = Instant.now().getEpochSecond();
-        long cooldownUntil = cooldownUntilEpoch.getOrDefault(player.getUniqueId(), 0L);
+        teleportRandom(player, type, configManager.settings().cooldownSeconds(), null, null, null);
+    }
 
-        if (cooldownUntil > now) {
-            long wait = cooldownUntil - now;
+    /**
+     * Random teleport with custom cooldown duration and optional pre-colored messages.
+     */
+    public void teleportRandom(
+            Player player,
+            WorldType type,
+            int cooldownSeconds,
+            String searchingMessage,
+            String teleportedMessage,
+            String noSafeLocationMessage
+    ) {
+        Settings settings = configManager.settings();
+
+        if (!hasCooldownBypass(player) && isOnCooldown(player)) {
+            long wait = remainingCooldownSeconds(player);
             player.sendMessage(configManager.message("cooldown").replace("%time%", String.valueOf(wait)));
             return;
         }
@@ -91,7 +129,16 @@ public final class RtpManager {
             return;
         }
 
-        doTeleport(player, world, worldSettings, settings);
+        doTeleport(
+                player,
+                world,
+                worldSettings,
+                settings,
+                cooldownSeconds,
+                searchingMessage,
+                teleportedMessage,
+                noSafeLocationMessage
+        );
     }
 
     public void cancelWarmupIfMoving(Player player) {
@@ -107,11 +154,27 @@ public final class RtpManager {
         cooldownUntilEpoch.clear();
     }
 
-    private void doTeleport(Player player, World world, WorldSettings worldSettings, Settings settings) {
+    private void doTeleport(
+            Player player,
+            World world,
+            WorldSettings worldSettings,
+            Settings settings,
+            int cooldownSeconds,
+            String searchingMessage,
+            String teleportedMessage,
+            String noSafeLocationMessage
+    ) {
         if (!player.isOnline()) {
             warmups.remove(player.getUniqueId());
             return;
         }
+
+        if (searchingMessage != null && !searchingMessage.isBlank()) {
+            player.sendMessage(searchingMessage);
+        }
+
+        final String successMsg = teleportedMessage;
+        final String failMsg = noSafeLocationMessage;
 
         foliaCompat.runAsync(() -> locationFinder.findSafeLocation(world, worldSettings, settings.maxAttempts())
                 .thenAccept(location -> foliaCompat.runForEntity(player, () -> {
@@ -122,21 +185,32 @@ public final class RtpManager {
                     }
 
                     if (location == null) {
-                        player.sendMessage(configManager.message("no-safe-location"));
+                        if (failMsg != null && !failMsg.isBlank()) {
+                            player.sendMessage(failMsg);
+                        } else {
+                            player.sendMessage(configManager.message("no-safe-location"));
+                        }
                         return;
                     }
 
                     teleport(player, location);
                     playTeleportSound(player, settings);
-                    long expiresAt = Instant.now().getEpochSecond() + settings.cooldownSeconds();
-                    cooldownUntilEpoch.put(player.getUniqueId(), expiresAt);
-                    player.sendMessage(configManager.message("teleported"));
+                    applyCooldown(player, cooldownSeconds);
+                    if (successMsg != null && !successMsg.isBlank()) {
+                        player.sendMessage(successMsg);
+                    } else {
+                        player.sendMessage(configManager.message("teleported"));
+                    }
                 }))
                 .exceptionally(throwable -> {
                     foliaCompat.runForEntity(player, () -> {
                         warmups.remove(player.getUniqueId());
                         if (player.isOnline()) {
-                            player.sendMessage(configManager.message("no-safe-location"));
+                            if (failMsg != null && !failMsg.isBlank()) {
+                                player.sendMessage(failMsg);
+                            } else {
+                                player.sendMessage(configManager.message("no-safe-location"));
+                            }
                         }
                     });
                     plugin.getLogger().warning("Failed to find RTP location: " + throwable.getMessage());
