@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "id": "donutrtp",
+  "version": "${version}",
+  "name": "DonutRTP",
+  "description": "Server-side random teleportation for Fabric.",
+  "authors": ["NightBeam"],
+  "license": "All Rights Reserved",
+  "environment": "server",
+  "entrypoints": {
+    "main": ["io.nightbeam.donutrtp.DonutRTPMod"]
+  },
+  "depends": {
+    "fabricloader": ">=0.18.1",
+    "minecraft": "1.21.11",
+    "fabric-api": "*"
+  }
+}
