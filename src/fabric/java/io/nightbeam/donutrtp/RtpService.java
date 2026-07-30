@@ -30,7 +30,7 @@ public final class RtpService {
             return;
         }
 
-        pendingTeleports.put(uuid, new PendingTeleport(uuid, player.getServerWorld(), player.getPos(), config.warmupSeconds() * 20L));
+        pendingTeleports.put(uuid, new PendingTeleport(player.getPos(), config.warmupSeconds() * 20L));
         if (config.warmupSeconds() > 0) {
             player.sendMessage(Text.literal("Random teleport starts in " + config.warmupSeconds() + "s."), true);
         } else {
@@ -130,13 +130,11 @@ public final class RtpService {
     }
 
     private static final class PendingTeleport {
-        private final UUID playerUuid;
         private final Vec3d startPosition;
         private long warmupTicksRemaining;
         private RtpSearchTask searchTask;
 
-        private PendingTeleport(UUID playerUuid, Vec3d startPosition, long warmupTicksRemaining) {
-            this.playerUuid = playerUuid;
+        private PendingTeleport(Vec3d startPosition, long warmupTicksRemaining) {
             this.startPosition = startPosition;
             this.warmupTicksRemaining = Math.max(0L, warmupTicksRemaining);
         }
