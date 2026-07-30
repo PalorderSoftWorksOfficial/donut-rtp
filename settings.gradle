@@ -1,1 +1,34 @@
-rootProject.name = 'DonutRTP'
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        maven {
+            name = 'PalorderHosting'
+            url = 'https://maven.palorderhosting.net/releases'
+        }
+        maven {
+            name = 'FabricMC'
+            url = 'https://maven.fabricmc.net/'
+        }
+        maven {
+            name = 'QuiltMC'
+            url = 'https://maven.quiltmc.org/repository/release'
+        }
+        maven {
+            name = 'Forge'
+            url = 'https://maven.minecraftforge.net/'
+        }
+        maven {
+            name = 'NeoForged'
+            url = 'https://maven.neoforged.net/releases'
+        }
+        maven {
+            name = 'PaperMC'
+            url = 'https://repo.papermc.io/repository/maven-public/'
+        }
+        maven {
+            name = 'SpigotMC'
+            url = 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/'
+        }
+        mavenCentral()
+    }
+}

@@ -30,7 +30,7 @@ public final class RtpService {
             return;
         }
 
-        pendingTeleports.put(uuid, new PendingTeleport(player.getPos(), config.warmupSeconds() * 20L));
+        pendingTeleports.put(uuid, new PendingTeleport(player.getEntityPos(), config.warmupSeconds() * 20L));
         if (config.warmupSeconds() > 0) {
             player.sendMessage(Text.literal("Random teleport starts in " + config.warmupSeconds() + "s."), true);
         } else {
@@ -61,7 +61,7 @@ public final class RtpService {
             }
 
             if (pending.warmupTicksRemaining > 0) {
-                if (DonutRTPMod.CONFIG.cancelOnMove() && player.getPos().squaredDistanceTo(pending.startPosition) > 0.25D) {
+                if (DonutRTPMod.CONFIG.cancelOnMove() && player.getEntityPos().squaredDistanceTo(pending.startPosition) > 0.25D) {
                     player.sendMessage(Text.literal("Teleport cancelled because you moved."), true);
                     iterator.remove();
                     continue;
@@ -79,7 +79,7 @@ public final class RtpService {
             }
 
             if (pending.searchTask == null) {
-                pending.searchTask = new RtpSearchTask(player.getServerWorld(), player.getBlockPos(), DonutRTPMod.CONFIG);
+                pending.searchTask = new RtpSearchTask(player.getEntityWorld(), player.getBlockPos(), DonutRTPMod.CONFIG);
                 player.sendMessage(Text.literal("Searching for a safe location..."), true);
             }
 
