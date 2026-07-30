@@ -4,11 +4,11 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.mojang.brigadier.CommandDispatcher;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Comparator;
 import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
 import net.fabricmc.api.ModInitializer;
@@ -35,7 +35,7 @@ public final class DonutRTPMod implements ModInitializer {
         CommandRegistrationCallback.EVENT.register(this::registerCommands);
     }
 
-    private void registerCommands(net.minecraft.server.command.CommandDispatcher<ServerCommandSource> dispatcher, CommandRegistryAccess registryAccess, CommandManager.RegistrationEnvironment environment) {
+    private void registerCommands(CommandDispatcher<ServerCommandSource> dispatcher, CommandRegistryAccess registryAccess, CommandManager.RegistrationEnvironment environment) {
         dispatcher.register(CommandManager.literal("rtp")
                 .executes(context -> teleportSelf(context.getSource()))
                 .then(CommandManager.literal("reload")
@@ -86,10 +86,8 @@ public final class DonutRTPMod implements ModInitializer {
             BlockPos head = feet.up();
             BlockPos below = feet.down();
 
-            if (y >= world.getBottomY() + 1 && y < world.getTopYInclusive()) {
-                if (isSafe(world, feet, head, below)) {
-                    return Optional.of(feet);
-                }
+            if (isSafe(world, feet, head, below)) {
+                return Optional.of(feet);
             }
         }
 
