@@ -30,14 +30,14 @@ public final class DonutRTPMod implements ModInitializer {
 
     private void registerCommands(CommandDispatcher<ServerCommandSource> dispatcher, CommandRegistryAccess registryAccess, CommandManager.RegistrationEnvironment environment) {
         dispatcher.register(CommandManager.literal("rtp")
-                .executes(context -> startTeleport(context.getSource()))
+                .executes(context -> openMainGui(context.getSource()))
                 .then(CommandManager.literal("gui")
                         .executes(context -> openMainGui(context.getSource())))
                 .then(CommandManager.literal("admin")
-                        .requires(source -> source.hasPermissionLevel(2))
+                        .requires(CommandManager.requirePermissionLevel(CommandManager.GAMEMASTERS_CHECK))
                         .executes(context -> openAdminGui(context.getSource())))
                 .then(CommandManager.literal("reload")
-                        .requires(source -> source.hasPermissionLevel(2))
+                        .requires(CommandManager.requirePermissionLevel(CommandManager.GAMEMASTERS_CHECK))
                         .executes(context -> reloadConfig(context.getSource())))
                 .then(CommandManager.literal("cancel")
                         .executes(context -> cancelTeleport(context.getSource()))));
