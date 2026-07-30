@@ -17,10 +17,10 @@ public final class RtpSearchTask {
     private BlockPos result;
     private boolean finished;
 
-    public RtpSearchTask(ServerWorld world, RtpConfig config) {
+    public RtpSearchTask(ServerWorld world, BlockPos origin, RtpConfig config) {
         this.world = world;
         this.config = config;
-        this.origin = world.getSpawnPos();
+        this.origin = origin;
     }
 
     public boolean tick() {
