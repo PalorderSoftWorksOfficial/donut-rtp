@@ -15,10 +15,10 @@ import java.nio.file.Path;
 public final class RtpConfig {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
-    private int radius = 5000;
+    private int radius = 6000;
     private int minY = 0;
-    private int maxAttempts = 320;
-    private int attemptsPerTick = 12;
+    private int maxAttempts = 1000;
+    private int attemptsPerTick = 16;
     private int warmupSeconds = 3;
     private int cooldownSeconds = 120;
     private boolean cancelOnMove = true;
@@ -154,12 +154,8 @@ public final class RtpConfig {
         return FabricLoader.getInstance().getConfigDir().resolve("donut-rtp.json");
     }
 
-    public RtpSearchTask createSearchTask(ServerWorld world) {
-        return new RtpSearchTask(world, this);
-    }
-
-    private JsonObject toJsonInternal() {
-        return toJson();
+    public RtpSearchTask createSearchTask(ServerWorld world, net.minecraft.util.math.BlockPos origin) {
+        return new RtpSearchTask(world, origin, this);
     }
 
     private static int readInt(JsonObject json, String key, int fallback) {
