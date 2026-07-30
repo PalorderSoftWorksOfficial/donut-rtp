@@ -1,5 +1,6 @@
 package io.nightbeam.donutrtp;
 
+import net.minecraft.component.DataComponentTypes;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.SimpleInventory;
@@ -7,6 +8,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.screen.GenericContainerScreenHandler;
 import net.minecraft.screen.ScreenHandlerType;
+import net.minecraft.screen.SimpleNamedScreenHandlerFactory;
 import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
@@ -33,7 +35,8 @@ public final class RtpGuiScreenHandler extends GenericContainerScreenHandler {
     }
 
     public static void openMain(ServerPlayerEntity player) {
-        player.openHandledScreen((syncId, inventory, ignoredPlayer) -> new RtpGuiScreenHandler(syncId, inventory, MenuKind.MAIN), Text.literal("DonutRTP"));
+        SimpleNamedScreenHandlerFactory factory = new SimpleNamedScreenHandlerFactory((syncId, inventory, ignoredPlayer) -> new RtpGuiScreenHandler(syncId, inventory, MenuKind.MAIN), Text.literal("DonutRTP"));
+        player.openHandledScreen(factory);
     }
 
     public static void openAdmin(ServerPlayerEntity player) {
@@ -42,7 +45,8 @@ public final class RtpGuiScreenHandler extends GenericContainerScreenHandler {
             return;
         }
 
-        player.openHandledScreen((syncId, inventory, ignoredPlayer) -> new RtpGuiScreenHandler(syncId, inventory, MenuKind.ADMIN), Text.literal("DonutRTP Admin"));
+        SimpleNamedScreenHandlerFactory factory = new SimpleNamedScreenHandlerFactory((syncId, inventory, ignoredPlayer) -> new RtpGuiScreenHandler(syncId, inventory, MenuKind.ADMIN), Text.literal("DonutRTP Admin"));
+        player.openHandledScreen(factory);
     }
 
     private void populate() {
@@ -171,7 +175,7 @@ public final class RtpGuiScreenHandler extends GenericContainerScreenHandler {
 
     private static ItemStack named(net.minecraft.item.Item item, String name, Formatting formatting) {
         ItemStack stack = new ItemStack(item);
-        stack.set(net.minecraft.component.DataComponentTypes.CUSTOM_NAME, Text.literal(name).formatted(formatting));
+        stack.set(DataComponentTypes.CUSTOM_NAME, Text.literal(name).formatted(formatting));
         return stack;
     }
 }
