@@ -79,7 +79,7 @@ public final class RtpService {
             }
 
             if (pending.searchTask == null) {
-                pending.searchTask = new RtpSearchTask(player.getServerWorld(), DonutRTPMod.CONFIG);
+                pending.searchTask = new RtpSearchTask(player.getServerWorld(), player.getBlockPos(), DonutRTPMod.CONFIG);
                 player.sendMessage(Text.literal("Searching for a safe location..."), true);
             }
 
